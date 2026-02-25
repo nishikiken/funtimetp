@@ -16,7 +16,13 @@ import tkinter as tk
 from tkinter import ttk
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 pyautogui.FAILSAFE = False
 
@@ -68,100 +74,121 @@ def show_code_window():
     
     code_window = tk.Tk()
     code_window.title("MC Controller")
-    code_window.geometry("500x300")
+    code_window.geometry("600x400")
     code_window.configure(bg='#0f1419')
     code_window.resizable(False, False)
-    code_window.overrideredirect(True)  # Borderless
+    code_window.overrideredirect(True)
     
     # Центрируем окно
     screen_width = code_window.winfo_screenwidth()
     screen_height = code_window.winfo_screenheight()
-    x = (screen_width - 500) // 2
-    y = (screen_height - 300) // 2
-    code_window.geometry(f"500x300+{x}+{y}")
+    x = (screen_width - 600) // 2
+    y = (screen_height - 400) // 2
+    code_window.geometry(f"600x400+{x}+{y}")
     
-    # Делаем окно поверх всех
     code_window.attributes('-topmost', True)
     
-    # Рамка с градиентом (эмуляция через border)
-    main_frame = tk.Frame(code_window, bg='#60a5fa', bd=2)
-    main_frame.pack(fill='both', expand=True, padx=2, pady=2)
+    # Главный контейнер с градиентом (эмуляция)
+    main_canvas = tk.Canvas(code_window, width=600, height=400, bg='#0f1419', highlightthickness=0)
+    main_canvas.pack(fill='both', expand=True)
     
-    inner_frame = tk.Frame(main_frame, bg='#0f1419')
-    inner_frame.pack(fill='both', expand=True)
+    # Рисуем градиентный фон
+    for i in range(400):
+        ratio = i / 400
+        r1, g1, b1 = 15, 20, 25  # #0f1419
+        r2, g2, b2 = 26, 31, 46  # #1a1f2e
+        r = int(r1 + (r2 - r1) * ratio)
+        g = int(g1 + (g2 - g1) * ratio)
+        b = int(b1 + (b2 - b1) * ratio)
+        color = f'#{r:02x}{g:02x}{b:02x}'
+        main_canvas.create_line(0, i, 600, i, fill=color)
     
-    # Иконка и заголовок
-    header_frame = tk.Frame(inner_frame, bg='#0f1419')
-    header_frame.pack(pady=(30, 10))
+    # Рамка
+    main_canvas.create_rectangle(2, 2, 598, 398, outline='#60a5fa', width=2)
     
+    # Иконка молнии
     icon_label = tk.Label(
-        header_frame,
+        code_window,
         text="⚡",
-        font=("Arial", 40),
+        font=("Arial", 70),
         bg='#0f1419',
         fg='#60a5fa'
     )
-    icon_label.pack()
+    icon_label.place(x=300, y=50, anchor='center')
     
+    # Заголовок
     title_label = tk.Label(
-        header_frame,
+        code_window,
         text="MC Controller",
-        font=("Arial", 20, "bold"),
+        font=("Arial", 26, "bold"),
         bg='#0f1419',
         fg='#ffffff'
     )
-    title_label.pack()
+    title_label.place(x=300, y=130, anchor='center')
     
-    # Текст
-    info_label = tk.Label(
-        inner_frame,
-        text="Код доступа для подключения:",
-        font=("Arial", 11),
+    # Подзаголовок
+    subtitle_label = tk.Label(
+        code_window,
+        text="Код доступа для подключения",
+        font=("Arial", 12),
         bg='#0f1419',
         fg='#9ca3af'
     )
-    info_label.pack(pady=(10, 15))
+    subtitle_label.place(x=300, y=170, anchor='center')
     
-    # Код в красивой рамке
-    code_container = tk.Frame(inner_frame, bg='#1a1f2e', bd=0)
-    code_container.pack(pady=10, padx=60)
+    # Контейнер для кода
+    code_frame = tk.Frame(code_window, bg='#1a1f2e', bd=0)
+    code_frame.place(x=300, y=230, anchor='center', width=400, height=80)
     
-    code_inner = tk.Frame(code_container, bg='#1a1f2e')
-    code_inner.pack(padx=20, pady=15)
+    # Рисуем рамку вокруг кода
+    code_canvas = tk.Canvas(code_frame, width=400, height=80, bg='#1a1f2e', highlightthickness=0)
+    code_canvas.pack()
+    code_canvas.create_rectangle(2, 2, 398, 78, outline='#60a5fa', width=1)
     
+    # Код
     code_label = tk.Label(
-        code_inner,
+        code_frame,
         text=access_code,
-        font=("Courier New", 32, "bold"),
+        font=("Courier New", 36, "bold"),
         bg='#1a1f2e',
         fg='#60a5fa'
     )
-    code_label.pack()
+    code_label.place(x=200, y=40, anchor='center')
     
     # Статус
     status_label = tk.Label(
-        inner_frame,
-        text="Ожидание подключения...",
-        font=("Arial", 10),
+        code_window,
+        text="Ожидание подключения",
+        font=("Arial", 11),
         bg='#0f1419',
         fg='#6b7280'
     )
-    status_label.pack(pady=(15, 0))
+    status_label.place(x=300, y=300, anchor='center')
     
-    # Индикатор загрузки (анимация точек)
+    # Индикатор (точки)
     dots_label = tk.Label(
-        inner_frame,
+        code_window,
         text="",
-        font=("Arial", 14),
+        font=("Arial", 16),
         bg='#0f1419',
         fg='#60a5fa'
     )
-    dots_label.pack()
+    dots_label.place(x=300, y=330, anchor='center')
+    
+    # Подсказка
+    hint_label = tk.Label(
+        code_window,
+        text="Открой сайт и введи этот код",
+        font=("Arial", 10),
+        bg='#0f1419',
+        fg='#4b5563'
+    )
+    hint_label.place(x=300, y=365, anchor='center')
     
     # Анимация точек
     def animate_dots(count=0):
         if code_window.winfo_exists():
-            dots = "." * (count % 4)
+            dots = "." * ((count % 3) + 1)
             dots_label.config(text=dots)
             code_window.after(500, lambda: animate_dots(count + 1))
     
@@ -191,9 +218,18 @@ def send_minecraft_command(command):
         return False
 
 
-@app.route('/command', methods=['POST'])
+@app.route('/command', methods=['POST', 'OPTIONS'])
 def execute_command():
     """API endpoint для выполнения команд"""
+    
+    # Обработка preflight запроса
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+    
     try:
         data = request.json
         command = data.get('command')
@@ -210,7 +246,9 @@ def execute_command():
         success = send_minecraft_command(command)
         
         if success:
-            return jsonify({'status': 'success', 'command': command})
+            response = jsonify({'status': 'success', 'command': command})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
         else:
             return jsonify({'error': 'Ошибка выполнения команды'}), 500
             
@@ -225,10 +263,19 @@ def status():
     return jsonify({'status': 'online', 'message': 'MC Controller работает'})
 
 
-@app.route('/connect', methods=['POST'])
+@app.route('/connect', methods=['POST', 'OPTIONS'])
 def connect():
     """Проверка кода и подключение"""
     global connected, code_window
+    
+    # Обработка preflight запроса
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+    
     try:
         data = request.json
         code = data.get('code')
@@ -244,7 +291,9 @@ def connect():
         if code_window and code_window.winfo_exists():
             code_window.after(100, code_window.destroy)
         
-        return jsonify({'status': 'success', 'message': 'Подключено'})
+        response = jsonify({'status': 'success', 'message': 'Подключено'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
         
     except Exception as e:
         print(f"Ошибка подключения: {e}")
