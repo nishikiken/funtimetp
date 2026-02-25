@@ -8,21 +8,44 @@
 </head>
 <body>
 
+<!-- Модальное окно для ввода кода -->
+<div class="modal" id="codeModal">
+  <div class="modal-content">
+    <h2>🔐 Введи код доступа</h2>
+    <p>Код отображается в окне MC Controller</p>
+    <input type="text" id="codeInput" placeholder="XXX-000" maxlength="7" autocomplete="off">
+    <button class="modal-btn" onclick="submitCode()">Подключиться</button>
+    <div class="error-message" id="errorMessage"></div>
+  </div>
+</div>
+
 <div class="container">
   <div class="header">
-    <h1>🎮 FunTime TP</h1>
-    <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+    <div class="header-left">
+      <div class="logo">⚡</div>
+      <h1>FunTime TP</h1>
+    </div>
+    <button class="settings-btn" onclick="toggleSettings()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M16.25 10C16.25 10.625 16.75 11.125 17.375 11.125C17.625 11.125 17.875 11.25 18 11.5L18.5 12.5C18.625 12.75 18.625 13 18.5 13.25L18 14.25C17.875 14.5 17.625 14.625 17.375 14.625C16.75 14.625 16.25 15.125 16.25 15.75C16.25 16 16.125 16.25 15.875 16.375L14.875 16.875C14.625 17 14.375 17 14.125 16.875L13.125 16.375C12.875 16.25 12.625 16.25 12.375 16.375C11.75 16.75 11 16.5 10.625 15.875C10.5 15.625 10.25 15.5 10 15.5C9.75 15.5 9.5 15.625 9.375 15.875C9 16.5 8.25 16.75 7.625 16.375C7.375 16.25 7.125 16.25 6.875 16.375L5.875 16.875C5.625 17 5.375 17 5.125 16.875L4.125 16.375C3.875 16.25 3.75 16 3.75 15.75C3.75 15.125 3.25 14.625 2.625 14.625C2.375 14.625 2.125 14.5 2 14.25L1.5 13.25C1.375 13 1.375 12.75 1.5 12.5L2 11.5C2.125 11.25 2.375 11.125 2.625 11.125C3.25 11.125 3.75 10.625 3.75 10C3.75 9.75 3.875 9.5 4.125 9.375L5.125 8.875C5.375 8.75 5.625 8.75 5.875 8.875L6.875 9.375C7.125 9.5 7.375 9.5 7.625 9.375C8.25 9 9 9.25 9.375 9.875C9.5 10.125 9.75 10.25 10 10.25C10.25 10.25 10.5 10.125 10.625 9.875C11 9.25 11.75 9 12.375 9.375C12.625 9.5 12.875 9.5 13.125 9.375L14.125 8.875C14.375 8.75 14.625 8.75 14.875 8.875L15.875 9.375C16.125 9.5 16.25 9.75 16.25 10Z" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+    </button>
   </div>
 
   <!-- Настройки -->
   <div class="settings-panel" id="settingsPanel">
-    <h3>Привилегия</h3>
+    <h3>⚙️ Привилегия</h3>
     <div class="privilege-selector">
       <button class="privilege-btn active" data-privilege="player" onclick="setPrivilege('player')">
-        Игрок (2:30)
+        <span class="privilege-icon">👤</span>
+        <span>Игрок</span>
+        <span class="privilege-time">2:30</span>
       </button>
       <button class="privilege-btn" data-privilege="prince" onclick="setPrivilege('prince')">
-        Князь (1:00)
+        <span class="privilege-icon">👑</span>
+        <span>Князь</span>
+        <span class="privilege-time">1:00</span>
       </button>
     </div>
   </div>
@@ -93,14 +116,15 @@
   <!-- Кнопка запуска -->
   <div class="action-section">
     <button class="start-btn" id="startBtn" onclick="startSequence()">
-      <span id="btnText">🚀 Начать</span>
+      <span class="btn-icon">🚀</span>
+      <span id="btnText">Начать</span>
     </button>
     <div class="cooldown-info" id="cooldownInfo"></div>
   </div>
 
   <!-- Лог -->
   <div class="log-section">
-    <h3>Лог действий</h3>
+    <h3>📋 Лог действий</h3>
     <div class="log-content" id="logContent"></div>
   </div>
 </div>

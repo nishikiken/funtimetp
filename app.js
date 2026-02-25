@@ -3,6 +3,7 @@ let selectedAnki = null;
 let privilege = localStorage.getItem('privilege') || 'player';
 let isRunning = false;
 let cooldownEnd = null;
+let accessCode = localStorage.getItem('accessCode') || '';
 
 // Константы
 const COOLDOWNS = {
@@ -15,6 +16,57 @@ window.addEventListener('DOMContentLoaded', () => {
   loadPrivilege();
   checkCooldown();
   setInterval(updateCooldownDisplay, 1000);
+  
+  // Проверяем наличие кода
+  if (!accessCode) {
+    showCodeModal();
+  }
+});
+
+// Показать модальное окно для ввода кода
+function showCodeModal() {
+  document.getElementById('codeModal').style.display = 'flex';
+}
+
+// Отправить код
+function submitCode() {
+  const input = document.getElementById('codeInput');
+  const code = input.value.trim().toUpperCase();
+  const errorMsg = document.getElementById('errorMessage');
+  
+  if (!code || code.length < 7) {
+    errorMsg.textContent = 'Введи код в формате XXX-000';
+    return;
+  }
+  
+  // Сохраняем код
+  accessCode = code;
+  localStorage.setItem('accessCode', code);
+  
+  // Закрываем модальное окно
+  document.getElementById('codeModal').style.display = 'none';
+  addLog('✅ Код доступа принят', 'success');
+}
+
+// Обработка Enter в поле ввода кода
+document.addEventListener('DOMContentLoaded', () => {
+  const codeInput = document.getElementById('codeInput');
+  if (codeInput) {
+    codeInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        submitCode();
+      }
+    });
+    
+    // Автоформатирование кода
+    codeInput.addEventListener('input', (e) => {
+      let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (value.length > 3) {
+        value = value.slice(0, 3) + '-' + value.slice(3, 6);
+      }
+      e.target.value = value;
+    });
+  }
 });
 
 // Переключение настроек
@@ -111,8 +163,19 @@ async function sendCommand(command) {
     const response = await fetch('http://localhost:5000/command', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ command })
+      body: JSON.stringify({ 
+        command: command,
+        code: accessCode 
+      })
     });
+    
+    if (response.status === 403) {
+      // Неверный код
+      accessCode = '';
+      localStorage.removeItem('accessCode');
+      showCodeModal();
+      throw new Error('Неверный код доступа');
+    }
     
     if (!response.ok) {
       throw new Error('Ошибка отправки команды');
@@ -121,6 +184,9 @@ async function sendCommand(command) {
     const data = await response.json();
     return data;
   } catch (error) {
+    if (error.message === 'Неверный код доступа') {
+      throw error;
+    }
     throw new Error('Сервер недоступен. Запусти mc_controller.py');
   }
 }
