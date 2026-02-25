@@ -24,14 +24,27 @@ icon = None
 def create_icon_image():
     """Создать иконку для трея"""
     # Создаем простую иконку 64x64
-    image = Image.new('RGB', (64, 64), color='#1a1d29')
+    image = Image.new('RGB', (64, 64), color='#3b82f6')
     dc = ImageDraw.Draw(image)
     
-    # Рисуем круг
-    dc.ellipse([8, 8, 56, 56], fill='#60a5fa', outline='#a78bfa', width=3)
+    # Рисуем "MC" крупным шрифтом
+    from PIL import ImageFont
+    try:
+        # Пытаемся использовать системный шрифт
+        font = ImageFont.truetype("arial.ttf", 28)
+    except:
+        # Если не получилось, используем стандартный
+        font = ImageFont.load_default()
     
-    # Рисуем "MC"
-    dc.text((18, 22), "MC", fill='white')
+    # Центрируем текст
+    text = "MC"
+    bbox = dc.textbbox((0, 0), text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+    x = (64 - text_width) // 2
+    y = (64 - text_height) // 2 - 5
+    
+    dc.text((x, y), text, fill='white', font=font)
     
     return image
 
