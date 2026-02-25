@@ -19,6 +19,11 @@ pip install flask flask-cors keyboard pyautogui pystray pillow
 ```
 
 2. Запусти контроллер:
+
+**Вариант 1 (простой):**
+Двойной клик на `start_controller.bat`
+
+**Вариант 2 (через терминал):**
 ```bash
 python mc_controller.py
 ```
