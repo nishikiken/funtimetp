@@ -11,9 +11,20 @@
 <!-- Модальное окно для ввода кода -->
 <div class="modal" id="codeModal">
   <div class="modal-content">
-    <h2>🔐 Введи код доступа</h2>
+    <div class="modal-icon">⚡</div>
+    <h2>Введи код доступа</h2>
     <p>Код отображается в окне MC Controller</p>
-    <input type="text" id="codeInput" placeholder="XXX-000" maxlength="7" autocomplete="off">
+    
+    <div class="code-input-container">
+      <input type="text" class="code-input" id="letter1" maxlength="1" autocomplete="off">
+      <input type="text" class="code-input" id="letter2" maxlength="1" autocomplete="off">
+      <input type="text" class="code-input" id="letter3" maxlength="1" autocomplete="off">
+      <span class="code-separator">-</span>
+      <input type="text" class="code-input" id="digit1" maxlength="1" autocomplete="off">
+      <input type="text" class="code-input" id="digit2" maxlength="1" autocomplete="off">
+      <input type="text" class="code-input" id="digit3" maxlength="1" autocomplete="off">
+    </div>
+    
     <button class="modal-btn" onclick="submitCode()">Подключиться</button>
     <div class="error-message" id="errorMessage"></div>
   </div>

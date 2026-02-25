@@ -4,6 +4,7 @@ let privilege = localStorage.getItem('privilege') || 'player';
 let isRunning = false;
 let cooldownEnd = null;
 let accessCode = localStorage.getItem('accessCode') || '';
+let isConnected = false;
 
 // Константы
 const COOLDOWNS = {
@@ -20,54 +21,159 @@ window.addEventListener('DOMContentLoaded', () => {
   // Проверяем наличие кода
   if (!accessCode) {
     showCodeModal();
+  } else {
+    // Проверяем подключение
+    checkConnection();
   }
+  
+  setupCodeInputs();
 });
 
-// Показать модальное окно для ввода кода
-function showCodeModal() {
-  document.getElementById('codeModal').style.display = 'flex';
-}
-
-// Отправить код
-function submitCode() {
-  const input = document.getElementById('codeInput');
-  const code = input.value.trim().toUpperCase();
-  const errorMsg = document.getElementById('errorMessage');
+// Настройка полей ввода кода
+function setupCodeInputs() {
+  const inputs = ['letter1', 'letter2', 'letter3', 'digit1', 'digit2', 'digit3'];
   
-  if (!code || code.length < 7) {
-    errorMsg.textContent = 'Введи код в формате XXX-000';
-    return;
-  }
-  
-  // Сохраняем код
-  accessCode = code;
-  localStorage.setItem('accessCode', code);
-  
-  // Закрываем модальное окно
-  document.getElementById('codeModal').style.display = 'none';
-  addLog('✅ Код доступа принят', 'success');
-}
-
-// Обработка Enter в поле ввода кода
-document.addEventListener('DOMContentLoaded', () => {
-  const codeInput = document.getElementById('codeInput');
-  if (codeInput) {
-    codeInput.addEventListener('keypress', (e) => {
+  inputs.forEach((id, index) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    
+    // Автофокус на первое поле
+    if (index === 0) {
+      setTimeout(() => input.focus(), 300);
+    }
+    
+    input.addEventListener('input', (e) => {
+      let value = e.target.value.toUpperCase();
+      
+      // Для букв - только буквы
+      if (index < 3) {
+        value = value.replace(/[^A-Z]/g, '');
+      } else {
+        // Для цифр - только цифры
+        value = value.replace(/[^0-9]/g, '');
+      }
+      
+      e.target.value = value;
+      
+      // Автопереход на следующее поле
+      if (value && index < inputs.length - 1) {
+        document.getElementById(inputs[index + 1]).focus();
+      }
+      
+      // Автоотправка при заполнении всех полей
+      if (index === inputs.length - 1 && value) {
+        setTimeout(submitCode, 100);
+      }
+    });
+    
+    // Backspace - переход на предыдущее поле
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !e.target.value && index > 0) {
+        document.getElementById(inputs[index - 1]).focus();
+      }
+      
+      // Enter - отправка
       if (e.key === 'Enter') {
         submitCode();
       }
     });
     
-    // Автоформатирование кода
-    codeInput.addEventListener('input', (e) => {
-      let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      if (value.length > 3) {
-        value = value.slice(0, 3) + '-' + value.slice(3, 6);
+    // Вставка кода из буфера
+    input.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const pastedText = e.clipboardData.getData('text').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      
+      if (pastedText.length >= 6) {
+        document.getElementById('letter1').value = pastedText[0] || '';
+        document.getElementById('letter2').value = pastedText[1] || '';
+        document.getElementById('letter3').value = pastedText[2] || '';
+        document.getElementById('digit1').value = pastedText[3] || '';
+        document.getElementById('digit2').value = pastedText[4] || '';
+        document.getElementById('digit3').value = pastedText[5] || '';
+        setTimeout(submitCode, 100);
       }
-      e.target.value = value;
     });
+  });
+}
+
+// Показать модальное окно для ввода кода
+function showCodeModal() {
+  document.getElementById('codeModal').style.display = 'flex';
+  setTimeout(() => {
+    const firstInput = document.getElementById('letter1');
+    if (firstInput) firstInput.focus();
+  }, 300);
+}
+
+// Проверка подключения
+async function checkConnection() {
+  try {
+    const response = await fetch('http://localhost:5000/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: accessCode })
+    });
+    
+    if (response.ok) {
+      isConnected = true;
+      addLog('✅ Подключено к MC Controller', 'success');
+    } else {
+      // Неверный код - запрашиваем заново
+      accessCode = '';
+      localStorage.removeItem('accessCode');
+      showCodeModal();
+    }
+  } catch (error) {
+    addLog('⚠️ MC Controller не запущен', 'error');
   }
-});
+}
+
+// Отправить код
+async function submitCode() {
+  const letter1 = document.getElementById('letter1').value;
+  const letter2 = document.getElementById('letter2').value;
+  const letter3 = document.getElementById('letter3').value;
+  const digit1 = document.getElementById('digit1').value;
+  const digit2 = document.getElementById('digit2').value;
+  const digit3 = document.getElementById('digit3').value;
+  
+  const code = `${letter1}${letter2}${letter3}-${digit1}${digit2}${digit3}`;
+  const errorMsg = document.getElementById('errorMessage');
+  
+  if (code.length < 7 || code.includes('-undefined')) {
+    errorMsg.textContent = 'Заполни все поля';
+    return;
+  }
+  
+  try {
+    // Проверяем код на сервере
+    const response = await fetch('http://localhost:5000/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code })
+    });
+    
+    if (response.ok) {
+      // Сохраняем код
+      accessCode = code;
+      localStorage.setItem('accessCode', code);
+      isConnected = true;
+      
+      // Закрываем модальное окно
+      document.getElementById('codeModal').style.display = 'none';
+      addLog('✅ Подключено к MC Controller', 'success');
+    } else {
+      errorMsg.textContent = 'Неверный код доступа';
+      // Очищаем поля
+      ['letter1', 'letter2', 'letter3', 'digit1', 'digit2', 'digit3'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('letter1').focus();
+    }
+  } catch (error) {
+    errorMsg.textContent = 'Сервер недоступен. Запусти mc_controller.py';
+  }
+}
 
 // Переключение настроек
 function toggleSettings() {
@@ -170,9 +276,10 @@ async function sendCommand(command) {
     });
     
     if (response.status === 403) {
-      // Неверный код
+      // Неверный код - переподключаемся
       accessCode = '';
       localStorage.removeItem('accessCode');
+      isConnected = false;
       showCodeModal();
       throw new Error('Неверный код доступа');
     }
@@ -184,10 +291,10 @@ async function sendCommand(command) {
     const data = await response.json();
     return data;
   } catch (error) {
-    if (error.message === 'Неверный код доступа') {
-      throw error;
+    if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
+      throw new Error('Сервер недоступен. Запусти mc_controller.py');
     }
-    throw new Error('Сервер недоступен. Запусти mc_controller.py');
+    throw error;
   }
 }
 

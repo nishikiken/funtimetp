@@ -25,6 +25,7 @@ server_running = False
 icon = None
 access_code = ""
 code_window = None
+connected = False
 
 
 def create_icon_image():
@@ -66,75 +67,106 @@ def show_code_window():
     global code_window, access_code
     
     code_window = tk.Tk()
-    code_window.title("MC Controller - Код доступа")
-    code_window.geometry("400x250")
-    code_window.configure(bg='#1a1d29')
+    code_window.title("MC Controller")
+    code_window.geometry("500x300")
+    code_window.configure(bg='#0f1419')
     code_window.resizable(False, False)
     code_window.overrideredirect(True)  # Borderless
     
     # Центрируем окно
     screen_width = code_window.winfo_screenwidth()
     screen_height = code_window.winfo_screenheight()
-    x = (screen_width - 400) // 2
-    y = (screen_height - 250) // 2
-    code_window.geometry(f"400x250+{x}+{y}")
+    x = (screen_width - 500) // 2
+    y = (screen_height - 300) // 2
+    code_window.geometry(f"500x300+{x}+{y}")
     
     # Делаем окно поверх всех
     code_window.attributes('-topmost', True)
     
-    # Заголовок
+    # Рамка с градиентом (эмуляция через border)
+    main_frame = tk.Frame(code_window, bg='#60a5fa', bd=2)
+    main_frame.pack(fill='both', expand=True, padx=2, pady=2)
+    
+    inner_frame = tk.Frame(main_frame, bg='#0f1419')
+    inner_frame.pack(fill='both', expand=True)
+    
+    # Иконка и заголовок
+    header_frame = tk.Frame(inner_frame, bg='#0f1419')
+    header_frame.pack(pady=(30, 10))
+    
+    icon_label = tk.Label(
+        header_frame,
+        text="⚡",
+        font=("Arial", 40),
+        bg='#0f1419',
+        fg='#60a5fa'
+    )
+    icon_label.pack()
+    
     title_label = tk.Label(
-        code_window,
-        text="🎮 MC Controller",
-        font=("Arial", 18, "bold"),
-        bg='#1a1d29',
+        header_frame,
+        text="MC Controller",
+        font=("Arial", 20, "bold"),
+        bg='#0f1419',
         fg='#ffffff'
     )
-    title_label.pack(pady=(20, 10))
+    title_label.pack()
     
     # Текст
     info_label = tk.Label(
-        code_window,
-        text="Твой код доступа:",
-        font=("Arial", 12),
-        bg='#1a1d29',
-        fg='#a0a0a0'
+        inner_frame,
+        text="Код доступа для подключения:",
+        font=("Arial", 11),
+        bg='#0f1419',
+        fg='#9ca3af'
     )
-    info_label.pack(pady=(0, 10))
+    info_label.pack(pady=(10, 15))
     
-    # Код
-    code_frame = tk.Frame(code_window, bg='#2d3142', bd=0)
-    code_frame.pack(pady=10, padx=40, fill='x')
+    # Код в красивой рамке
+    code_container = tk.Frame(inner_frame, bg='#1a1f2e', bd=0)
+    code_container.pack(pady=10, padx=60)
+    
+    code_inner = tk.Frame(code_container, bg='#1a1f2e')
+    code_inner.pack(padx=20, pady=15)
     
     code_label = tk.Label(
-        code_frame,
+        code_inner,
         text=access_code,
-        font=("Courier New", 24, "bold"),
-        bg='#2d3142',
+        font=("Courier New", 32, "bold"),
+        bg='#1a1f2e',
         fg='#60a5fa',
-        pady=15
+        letterspace=3
     )
     code_label.pack()
     
-    # Кнопка
-    def close_window():
-        code_window.destroy()
-    
-    btn = tk.Button(
-        code_window,
-        text="Понял",
-        font=("Arial", 12, "bold"),
-        bg='#60a5fa',
-        fg='#ffffff',
-        activebackground='#3b82f6',
-        activeforeground='#ffffff',
-        bd=0,
-        padx=40,
-        pady=10,
-        cursor='hand2',
-        command=close_window
+    # Статус
+    status_label = tk.Label(
+        inner_frame,
+        text="Ожидание подключения...",
+        font=("Arial", 10),
+        bg='#0f1419',
+        fg='#6b7280'
     )
-    btn.pack(pady=20)
+    status_label.pack(pady=(15, 0))
+    
+    # Индикатор загрузки (анимация точек)
+    dots_label = tk.Label(
+        inner_frame,
+        text="",
+        font=("Arial", 14),
+        bg='#0f1419',
+        fg='#60a5fa'
+    )
+    dots_label.pack()
+    
+    # Анимация точек
+    def animate_dots(count=0):
+        if code_window.winfo_exists():
+            dots = "." * (count % 4)
+            dots_label.config(text=dots)
+            code_window.after(500, lambda: animate_dots(count + 1))
+    
+    animate_dots()
     
     code_window.mainloop()
 
@@ -192,6 +224,32 @@ def execute_command():
 def status():
     """Проверка статуса сервера"""
     return jsonify({'status': 'online', 'message': 'MC Controller работает'})
+
+
+@app.route('/connect', methods=['POST'])
+def connect():
+    """Проверка кода и подключение"""
+    global connected, code_window
+    try:
+        data = request.json
+        code = data.get('code')
+        
+        if code != access_code:
+            return jsonify({'error': 'Неверный код доступа'}), 403
+        
+        # Успешное подключение
+        connected = True
+        print(f"✅ Подключение установлено!")
+        
+        # Закрываем окно с кодом
+        if code_window and code_window.winfo_exists():
+            code_window.after(100, code_window.destroy)
+        
+        return jsonify({'status': 'success', 'message': 'Подключено'})
+        
+    except Exception as e:
+        print(f"Ошибка подключения: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 def run_flask():
