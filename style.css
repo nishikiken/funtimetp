@@ -485,4 +485,42 @@ body {
   .privilege-selector {
     grid-template-columns: 1fr;
   }
+  
+  /* Уменьшаем поля ввода кода на мобильных */
+  .code-input {
+    width: 40px;
+    height: 50px;
+    font-size: 24px;
+  }
+  
+  .code-separator {
+    font-size: 28px;
+    margin: 0 3px;
+  }
+  
+  .modal-content {
+    padding: 30px 20px;
+  }
+  
+  .modal-icon {
+    font-size: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Еще меньше для очень маленьких экранов */
+  .code-input {
+    width: 35px;
+    height: 45px;
+    font-size: 20px;
+  }
+  
+  .code-separator {
+    font-size: 24px;
+    margin: 0 2px;
+  }
+  
+  .code-input-container {
+    gap: 5px;
+  }
 }

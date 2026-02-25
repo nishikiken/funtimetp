@@ -134,8 +134,7 @@ def show_code_window():
         text=access_code,
         font=("Courier New", 32, "bold"),
         bg='#1a1f2e',
-        fg='#60a5fa',
-        letterspace=3
+        fg='#60a5fa'
     )
     code_label.pack()
     
