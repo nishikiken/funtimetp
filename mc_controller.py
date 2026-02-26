@@ -74,10 +74,8 @@ def show_code_window():
     """Показать окно с кодом доступа"""
     global code_window, access_code
     
-    # Получаем локальный IP
-    import socket
-    hostname = socket.gethostname()
-    local_ip = socket.gethostbyname(hostname)
+    # Получаем правильный локальный IP
+    local_ip = get_local_ip()
     url = f"http://{local_ip}:5000"
     
     code_window = tk.Tk()
@@ -196,28 +194,90 @@ def show_code_window():
     code_window.mainloop()
 
 
-def send_minecraft_command(command):
-    """Отправить команду в Minecraft"""
+def get_local_ip():
+    """Получить правильный локальный IP (не виртуальный адаптер)"""
+    import socket
     try:
-        # Открыть чат (T)
-        keyboard.press_and_release('t')
+        # Создаем UDP соединение (не отправляем данные)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except:
+        # Fallback
+        hostname = socket.gethostname()
+        return socket.gethostbyname(hostname)
+
+
+def send_minecraft_command(command):
+    """Отправить команду в Minecraft (в фоне, без переключения окна)"""
+    try:
+        import win32gui
+        import win32con
+        import win32api
+        
+        # Ищем окно Minecraft
+        minecraft_window = None
+        
+        def callback(hwnd, windows):
+            if win32gui.IsWindowVisible(hwnd):
+                title = win32gui.GetWindowText(hwnd)
+                if "Minecraft" in title:
+                    windows.append(hwnd)
+        
+        windows = []
+        win32gui.EnumWindows(callback, windows)
+        
+        if not windows:
+            print("⚠️ Окно Minecraft не найдено!")
+            return False
+        
+        minecraft_window = windows[0]
+        print(f"✅ Найдено окно: {win32gui.GetWindowText(minecraft_window)}")
+        
+        # Отправляем команду в окно Minecraft
+        # 1. Открываем чат (T)
+        win32api.PostMessage(minecraft_window, win32con.WM_KEYDOWN, ord('T'), 0)
+        time.sleep(0.1)
+        win32api.PostMessage(minecraft_window, win32con.WM_KEYUP, ord('T'), 0)
         time.sleep(0.2)
         
-        # Копируем команду в буфер обмена
+        # 2. Копируем команду в буфер обмена
         pyperclip.copy(command)
         time.sleep(0.1)
         
-        # Вставляем через Ctrl+V
-        keyboard.press_and_release('ctrl+v')
+        # 3. Вставляем через Ctrl+V
+        win32api.PostMessage(minecraft_window, win32con.WM_KEYDOWN, win32con.VK_CONTROL, 0)
+        win32api.PostMessage(minecraft_window, win32con.WM_KEYDOWN, ord('V'), 0)
+        time.sleep(0.1)
+        win32api.PostMessage(minecraft_window, win32con.WM_KEYUP, ord('V'), 0)
+        win32api.PostMessage(minecraft_window, win32con.WM_KEYUP, win32con.VK_CONTROL, 0)
         time.sleep(0.1)
         
-        # Отправить (Enter)
-        keyboard.press_and_release('enter')
+        # 4. Отправляем (Enter)
+        win32api.PostMessage(minecraft_window, win32con.WM_KEYDOWN, win32con.VK_RETURN, 0)
+        time.sleep(0.1)
+        win32api.PostMessage(minecraft_window, win32con.WM_KEYUP, win32con.VK_RETURN, 0)
         time.sleep(0.3)
         
         return True
+        
+    except ImportError:
+        print("⚠️ Модуль pywin32 не установлен, использую обычный метод")
+        # Fallback на старый метод
+        keyboard.press_and_release('t')
+        time.sleep(0.2)
+        pyperclip.copy(command)
+        time.sleep(0.1)
+        keyboard.press_and_release('ctrl+v')
+        time.sleep(0.1)
+        keyboard.press_and_release('enter')
+        time.sleep(0.3)
+        return True
+        
     except Exception as e:
-        print(f"Ошибка отправки команды: {e}")
+        print(f"❌ Ошибка отправки команды: {e}")
         return False
 
 
@@ -368,10 +428,8 @@ if __name__ == '__main__':
     # Генерируем код доступа
     access_code = generate_access_code()
     
-    # Получаем локальный IP
-    import socket
-    hostname = socket.gethostname()
-    local_ip = socket.gethostbyname(hostname)
+    # Получаем правильный локальный IP
+    local_ip = get_local_ip()
     url = f"http://{local_ip}:5000"
     
     print("=" * 60)
@@ -396,6 +454,8 @@ if __name__ == '__main__':
     print("   1. Открой адрес выше на телефоне")
     print("   2. Введи код доступа")
     print("   3. Управляй Minecraft с телефона!")
+    print()
+    print("💡 Команды отправляются в фоне - не нужно переключаться!")
     print("=" * 60)
     
     # Показываем окно с кодом в отдельном потоке
