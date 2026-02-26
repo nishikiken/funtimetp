@@ -14,6 +14,7 @@ import random
 import string
 import tkinter as tk
 from tkinter import ttk
+import pyperclip
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -154,15 +155,19 @@ def send_minecraft_command(command):
     try:
         # Открыть чат (T)
         keyboard.press_and_release('t')
+        time.sleep(0.2)
+        
+        # Копируем команду в буфер обмена
+        pyperclip.copy(command)
         time.sleep(0.1)
         
-        # Вставить команду
-        pyautogui.write(command, interval=0.01)
-        time.sleep(0.05)
+        # Вставляем через Ctrl+V
+        keyboard.press_and_release('ctrl+v')
+        time.sleep(0.1)
         
         # Отправить (Enter)
         keyboard.press_and_release('enter')
-        time.sleep(0.1)
+        time.sleep(0.3)
         
         return True
     except Exception as e:
