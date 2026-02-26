@@ -2,7 +2,7 @@
 let selectedAnki = null;
 let privilege = localStorage.getItem('privilege') || 'player';
 let isRunning = false;
-let cooldownEnd = null;
+let ankiCooldowns = JSON.parse(localStorage.getItem('ankiCooldowns') || '{}'); // {101: timestamp, 102: timestamp, ...}
 let accessCode = localStorage.getItem('accessCode') || '';
 let isConnected = false;
 
@@ -15,8 +15,8 @@ const COOLDOWNS = {
 // Инициализация
 window.addEventListener('DOMContentLoaded', () => {
   loadPrivilege();
-  checkCooldown();
-  setInterval(updateCooldownDisplay, 1000);
+  updateAllAnkiStates();
+  setInterval(updateAllAnkiStates, 1000);
   
   // Проверяем наличие кода
   if (!accessCode) {
@@ -303,6 +303,16 @@ function loadPrivilege() {
 function selectAnki(num) {
   if (isRunning) return;
   
+  // Проверяем кулдаун этой анки
+  const cooldownEnd = ankiCooldowns[num];
+  if (cooldownEnd && Date.now() < cooldownEnd) {
+    const remaining = Math.ceil((cooldownEnd - Date.now()) / 1000);
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    addLog(`⏱️ Анка ${num} на кулдауне: ${minutes}:${seconds.toString().padStart(2, '0')}`, 'error');
+    return;
+  }
+  
   selectedAnki = num;
   
   document.querySelectorAll('.anki-btn').forEach(btn => {
@@ -310,53 +320,63 @@ function selectAnki(num) {
   });
   event.target.classList.add('selected');
   
-  addLog(`Выбрана анка: ${num}`, 'info');
+  addLog(`✅ Выбрана анка: ${num}`, 'info');
 }
 
 // Запуск последовательности
 async function startSequence() {
   if (isRunning) return;
   if (!selectedAnki) {
-    addLog('Выбери анку!', 'error');
+    addLog('❌ Выбери анку!', 'error');
     return;
   }
   
-  // Проверка кулдауна
+  // Проверка кулдауна выбранной анки
+  const cooldownEnd = ankiCooldowns[selectedAnki];
   if (cooldownEnd && Date.now() < cooldownEnd) {
-    addLog('Подожди окончания кулдауна!', 'error');
+    addLog('⏱️ Эта анка на кулдауне!', 'error');
     return;
   }
   
   isRunning = true;
   updateButtonState();
   
+  const currentAnki = selectedAnki;
+  
   try {
     // 1. Телепорт на анку
-    addLog(`Телепорт на анку ${selectedAnki}...`, 'info');
-    await sendCommand(`/an${selectedAnki}`);
+    addLog(`📍 Телепорт на анку ${currentAnki}...`, 'info');
+    await sendCommand(`/an${currentAnki}`);
     await sleep(1000);
     
     // 2. RTP
-    addLog('Телепорт в случайную точку...', 'info');
+    addLog('🌍 Телепорт в случайную точку...', 'info');
     await sendCommand('/rtp small');
     await sleep(2000);
     
     // 3. Near
-    addLog('Проверка сущностей...', 'info');
+    addLog('👁️ Проверка сущностей...', 'info');
     await sendCommand('/near max');
     
     addLog('✅ Последовательность завершена!', 'success');
     
-    // Установка кулдауна
+    // Установка кулдауна для этой анки
     const cooldownSeconds = COOLDOWNS[privilege];
-    cooldownEnd = Date.now() + (cooldownSeconds * 1000);
-    localStorage.setItem('cooldownEnd', cooldownEnd);
+    ankiCooldowns[currentAnki] = Date.now() + (cooldownSeconds * 1000);
+    localStorage.setItem('ankiCooldowns', JSON.stringify(ankiCooldowns));
+    
+    // Обновляем состояние кнопки анки
+    updateAnkiState(currentAnki);
     
   } catch (error) {
     addLog(`❌ Ошибка: ${error.message}`, 'error');
   } finally {
     isRunning = false;
     updateButtonState();
+    selectedAnki = null;
+    document.querySelectorAll('.anki-btn').forEach(btn => {
+      btn.classList.remove('selected');
+    });
   }
 }
 
@@ -399,34 +419,58 @@ async function sendCommand(command) {
 
 // Проверка кулдауна при загрузке
 function checkCooldown() {
-  const saved = localStorage.getItem('cooldownEnd');
-  if (saved) {
-    cooldownEnd = parseInt(saved);
-    if (Date.now() >= cooldownEnd) {
-      cooldownEnd = null;
-      localStorage.removeItem('cooldownEnd');
+  // Очищаем старые кулдауны
+  const now = Date.now();
+  for (const anki in ankiCooldowns) {
+    if (ankiCooldowns[anki] < now) {
+      delete ankiCooldowns[anki];
+    }
+  }
+  localStorage.setItem('ankiCooldowns', JSON.stringify(ankiCooldowns));
+}
+
+// Обновление состояния всех анок
+function updateAllAnkiStates() {
+  checkCooldown();
+  
+  document.querySelectorAll('.anki-btn').forEach(btn => {
+    const anki = parseInt(btn.textContent);
+    updateAnkiState(anki);
+  });
+}
+
+// Обновление состояния конкретной анки
+function updateAnkiState(anki) {
+  const btn = Array.from(document.querySelectorAll('.anki-btn')).find(b => parseInt(b.textContent) === anki);
+  if (!btn) return;
+  
+  const cooldownEnd = ankiCooldowns[anki];
+  
+  if (cooldownEnd && Date.now() < cooldownEnd) {
+    const remaining = Math.ceil((cooldownEnd - Date.now()) / 1000);
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    
+    btn.classList.add('cooldown');
+    btn.disabled = true;
+    btn.setAttribute('data-cooldown', `${minutes}:${seconds.toString().padStart(2, '0')}`);
+  } else {
+    btn.classList.remove('cooldown');
+    btn.disabled = false;
+    btn.removeAttribute('data-cooldown');
+    
+    // Удаляем из списка кулдаунов
+    if (ankiCooldowns[anki]) {
+      delete ankiCooldowns[anki];
+      localStorage.setItem('ankiCooldowns', JSON.stringify(ankiCooldowns));
     }
   }
 }
 
 // Обновление отображения кулдауна
 function updateCooldownDisplay() {
-  const info = document.getElementById('cooldownInfo');
-  
-  if (cooldownEnd && Date.now() < cooldownEnd) {
-    const remaining = Math.ceil((cooldownEnd - Date.now()) / 1000);
-    const minutes = Math.floor(remaining / 60);
-    const seconds = remaining % 60;
-    info.textContent = `⏱️ Кулдаун: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-    updateButtonState();
-  } else {
-    info.textContent = '';
-    if (cooldownEnd) {
-      cooldownEnd = null;
-      localStorage.removeItem('cooldownEnd');
-      updateButtonState();
-    }
-  }
+  // Эта функция больше не нужна, но оставим для совместимости
+  updateAllAnkiStates();
 }
 
 // Обновление состояния кнопки
@@ -437,12 +481,12 @@ function updateButtonState() {
   if (isRunning) {
     btn.disabled = true;
     btnText.textContent = '⏳ Выполняется...';
-  } else if (cooldownEnd && Date.now() < cooldownEnd) {
+  } else if (!selectedAnki) {
     btn.disabled = true;
-    btnText.textContent = '⏱️ Кулдаун';
+    btnText.textContent = 'Выбери анку';
   } else {
     btn.disabled = false;
-    btnText.textContent = '🚀 Начать';
+    btnText.textContent = 'Начать';
   }
 }
 

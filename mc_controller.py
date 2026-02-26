@@ -15,6 +15,7 @@ import string
 import tkinter as tk
 from tkinter import ttk
 import pyperclip
+import os
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -77,10 +78,11 @@ def show_code_window():
     import socket
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
+    url = f"http://{local_ip}:5000"
     
     code_window = tk.Tk()
     code_window.title("MC Controller")
-    code_window.geometry("400x280")
+    code_window.geometry("450x320")
     code_window.configure(bg='#1a1f2e')
     code_window.resizable(False, False)
     code_window.overrideredirect(True)
@@ -88,15 +90,15 @@ def show_code_window():
     # Центрируем окно
     screen_width = code_window.winfo_screenwidth()
     screen_height = code_window.winfo_screenheight()
-    x = (screen_width - 400) // 2
-    y = (screen_height - 280) // 2
-    code_window.geometry(f"400x280+{x}+{y}")
+    x = (screen_width - 450) // 2
+    y = (screen_height - 320) // 2
+    code_window.geometry(f"450x320+{x}+{y}")
     
     code_window.attributes('-topmost', True)
-    code_window.attributes('-alpha', 0.95)  # Полупрозрачность
+    code_window.attributes('-alpha', 0.95)
     
-    # Создаем скругленные углы через Canvas
-    canvas = tk.Canvas(code_window, width=400, height=280, bg='#0f1419', highlightthickness=0)
+    # Canvas для рисования
+    canvas = tk.Canvas(code_window, width=450, height=320, bg='#0f1419', highlightthickness=0)
     canvas.pack(fill='both', expand=True)
     
     # Рисуем скругленный прямоугольник
@@ -124,27 +126,71 @@ def show_code_window():
         return canvas.create_polygon(points, **kwargs, smooth=True)
     
     # Фон
-    round_rectangle(10, 10, 390, 270, radius=20, fill='#1a1f2e', outline='#60a5fa', width=2)
+    round_rectangle(10, 10, 440, 310, radius=20, fill='#1a1f2e', outline='#60a5fa', width=2)
     
-    # Текст сверху
-    canvas.create_text(200, 40, text="Введите этот код на сайте", 
-                      font=("Arial", 13), fill='#9ca3af')
+    # Заголовок
+    canvas.create_text(225, 30, text="🎮 MC Controller", 
+                      font=("Arial", 16, "bold"), fill='#ffffff')
     
-    # Код (большой)
-    canvas.create_text(200, 110, text=access_code, 
-                      font=("Courier New", 42, "bold"), fill='#60a5fa')
+    # Код доступа
+    canvas.create_text(225, 65, text="Код доступа:", 
+                      font=("Arial", 11), fill='#9ca3af')
+    canvas.create_text(225, 100, text=access_code, 
+                      font=("Courier New", 32, "bold"), fill='#60a5fa')
     
     # Разделитель
-    canvas.create_line(50, 160, 350, 160, fill='#2d3142', width=1)
+    canvas.create_line(40, 140, 410, 140, fill='#2d3142', width=1)
     
-    # IP адрес для телефона
-    canvas.create_text(200, 190, text="Адрес для телефона:", 
-                      font=("Arial", 10), fill='#6b7280')
-    canvas.create_text(200, 215, text=f"http://{local_ip}:5000", 
-                      font=("Courier New", 11, "bold"), fill='#10b981')
+    # Адрес для телефона
+    canvas.create_text(225, 165, text="📱 Адрес для телефона:", 
+                      font=("Arial", 11), fill='#9ca3af')
+    
+    # Создаем кликабельное поле с адресом
+    url_frame = tk.Frame(code_window, bg='#2d3142', cursor='hand2')
+    url_frame.place(x=75, y=185, width=300, height=35)
+    
+    url_label = tk.Label(
+        url_frame,
+        text=url,
+        font=("Courier New", 11, "bold"),
+        bg='#2d3142',
+        fg='#10b981',
+        cursor='hand2'
+    )
+    url_label.pack(expand=True)
+    
+    # Копирование при клике
+    def copy_url(event=None):
+        pyperclip.copy(url)
+        url_label.config(text="✅ Скопировано!")
+        code_window.after(1500, lambda: url_label.config(text=url))
+    
+    url_label.bind('<Button-1>', copy_url)
+    url_frame.bind('<Button-1>', copy_url)
+    
+    # Подсказка
+    canvas.create_text(225, 240, text="💡 Кликни на адрес чтобы скопировать", 
+                      font=("Arial", 9), fill='#6b7280')
+    
+    # Кнопка открыть в браузере (для ПК)
+    open_btn = tk.Button(
+        code_window,
+        text="🌐 Открыть на ПК",
+        font=("Arial", 10, "bold"),
+        bg='#3b82f6',
+        fg='#ffffff',
+        activebackground='#2563eb',
+        activeforeground='#ffffff',
+        bd=0,
+        padx=20,
+        pady=8,
+        cursor='hand2',
+        command=lambda: os.system(f'start {url}')
+    )
+    open_btn.place(x=175, y=265)
     
     # Статус
-    canvas.create_text(200, 250, text="Ожидание подключения...", 
+    canvas.create_text(225, 300, text="Ожидание подключения...", 
                       font=("Arial", 9), fill='#4b5563')
     
     code_window.mainloop()
@@ -322,14 +368,35 @@ if __name__ == '__main__':
     # Генерируем код доступа
     access_code = generate_access_code()
     
-    print("=" * 50)
+    # Получаем локальный IP
+    import socket
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    url = f"http://{local_ip}:5000"
+    
+    print("=" * 60)
     print("🎮 Minecraft Controller запущен!")
-    print("=" * 50)
+    print("=" * 60)
     print(f"Код доступа: {access_code}")
-    print("Сервер: http://localhost:5000")
-    print("Иконка в трее: MC Controller")
-    print("Открой index.html в браузере")
-    print("=" * 50)
+    print()
+    print("📱 Для подключения с телефона:")
+    print(f"   Открой в браузере: {url}")
+    print()
+    print("💻 Для подключения с ПК:")
+    print(f"   Открой в браузере: http://localhost:5000")
+    print()
+    print("🔗 Кликабельная ссылка:")
+    print(f"   \033]8;;{url}\033\\{url}\033]8;;\033\\")
+    print()
+    print("⚙️ Сервер работает на:")
+    print(f"   • http://127.0.0.1:5000")
+    print(f"   • {url}")
+    print()
+    print("📋 Инструкция:")
+    print("   1. Открой адрес выше на телефоне")
+    print("   2. Введи код доступа")
+    print("   3. Управляй Minecraft с телефона!")
+    print("=" * 60)
     
     # Показываем окно с кодом в отдельном потоке
     code_thread = threading.Thread(target=show_code_window, daemon=False)
