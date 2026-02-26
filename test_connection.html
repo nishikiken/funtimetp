@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тест подключения</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #0f1419;
+  color: #fff;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.test-box {
+  background: #1a1f2e;
+  border: 2px solid #60a5fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+input {
+  width: 100%;
+  padding: 12px;
+  background: #0f1419;
+  border: 2px solid #60a5fa;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  margin: 10px 0;
+}
+button {
+  width: 100%;
+  padding: 15px;
+  background: #60a5fa;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 10px 0;
+}
+button:active {
+  background: #3b82f6;
+}
+.result {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 14px;
+}
+.success { background: #10b981; color: #fff; }
+.error { background: #ef4444; color: #fff; }
+.info { background: #3b82f6; color: #fff; }
+</style>
+</head>
+<body>
+
+<h1>🔧 Тест подключения</h1>
+
+<div class="test-box">
+  <h3>1. Введи IP адрес из окна MC Controller</h3>
+  <input type="text" id="ipInput" placeholder="Например: 192.168.1.3:5000">
+  <button onclick="testConnection()">Проверить подключение</button>
+  <div id="result"></div>
+</div>
+
+<div class="test-box">
+  <h3>📋 Инструкция</h3>
+  <p>1. Запусти mc_controller.py на ПК</p>
+  <p>2. Скопируй IP адрес из окна</p>
+  <p>3. Введи его выше и нажми "Проверить"</p>
+  <p>4. Если ошибка - смотри решения ниже</p>
+</div>
+
+<div class="test-box">
+  <h3>❌ Возможные проблемы:</h3>
+  <p><strong>1. Брандмауэр Windows</strong></p>
+  <p>• Открой "Брандмауэр Windows"</p>
+  <p>• "Разрешить приложение"</p>
+  <p>• Найди Python и разреши</p>
+  
+  <p><strong>2. Разные сети</strong></p>
+  <p>• ПК и телефон должны быть в одном Wi-Fi</p>
+  <p>• Проверь что оба подключены к одной сети</p>
+  
+  <p><strong>3. Неправильный IP</strong></p>
+  <p>• На ПК открой CMD и введи: ipconfig</p>
+  <p>• Найди IPv4-адрес (например: 192.168.1.3)</p>
+  <p>• Используй этот IP с портом :5000</p>
+</div>
+
+<script>
+async function testConnection() {
+  const ip = document.getElementById('ipInput').value.trim();
+  const resultDiv = document.getElementById('result');
+  
+  if (!ip) {
+    resultDiv.innerHTML = '<div class="error">Введи IP адрес!</div>';
+    return;
+  }
+  
+  const server = ip.startsWith('http') ? ip : `http://${ip}`;
+  
+  resultDiv.innerHTML = '<div class="info">Подключаюсь...</div>';
+  
+  try {
+    // Тест 1: Проверка доступности сервера
+    const response = await fetch(`${server}/status`, {
+      method: 'GET',
+      mode: 'cors'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      resultDiv.innerHTML = `
+        <div class="success">✅ Сервер доступен!</div>
+        <div class="info">Статус: ${data.status}</div>
+        <div class="info">Сообщение: ${data.message}</div>
+        <div class="success">Можешь использовать этот IP в основном приложении!</div>
+      `;
+    } else {
+      resultDiv.innerHTML = `
+        <div class="error">❌ Сервер ответил с ошибкой</div>
+        <div class="info">Код: ${response.status}</div>
+      `;
+    }
+  } catch (error) {
+    resultDiv.innerHTML = `
+      <div class="error">❌ Не удалось подключиться</div>
+      <div class="info">Ошибка: ${error.message}</div>
+      <div class="info">
+        <br>Возможные причины:
+        <br>• Брандмауэр блокирует подключение
+        <br>• ПК и телефон в разных сетях
+        <br>• mc_controller.py не запущен
+        <br>• Неправильный IP адрес
+      </div>
+    `;
+  }
+}
+
+// Автозаполнение из localStorage
+window.onload = () => {
+  const savedIP = localStorage.getItem('serverIP');
+  if (savedIP) {
+    document.getElementById('ipInput').value = savedIP.replace('http://', '');
+  }
+};
+</script>
+
+</body>
+</html>
