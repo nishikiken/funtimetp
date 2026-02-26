@@ -209,6 +209,36 @@ def execute_command():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/')
+def index():
+    """Главная страница"""
+    try:
+        with open('index.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except:
+        return jsonify({'error': 'index.html not found'}), 404
+
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Раздача статических файлов"""
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Определяем тип контента
+        if filename.endswith('.js'):
+            return content, 200, {'Content-Type': 'application/javascript'}
+        elif filename.endswith('.css'):
+            return content, 200, {'Content-Type': 'text/css'}
+        elif filename.endswith('.html'):
+            return content, 200, {'Content-Type': 'text/html'}
+        else:
+            return content
+    except:
+        return jsonify({'error': f'{filename} not found'}), 404
+
+
 @app.route('/status', methods=['GET'])
 def status():
     """Проверка статуса сервера"""
