@@ -2,9 +2,9 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FunTime TP Control</title>
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FunTime TP</title>
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
@@ -12,8 +12,7 @@
 <div class="modal" id="codeModal">
   <div class="modal-content">
     <div class="modal-icon">⚡</div>
-    <h2>Введи код доступа</h2>
-    <p>Код отображается в окне MC Controller</p>
+    <h2>Код доступа</h2>
     
     <div class="code-input-container">
       <input type="text" class="code-input" id="letter1" maxlength="1" autocomplete="off">
@@ -31,115 +30,122 @@
 </div>
 
 <div class="container">
+  <!-- Хедер -->
   <div class="header">
     <div class="header-left">
       <div class="logo">⚡</div>
       <h1>FunTime TP</h1>
     </div>
     <button class="settings-btn" onclick="toggleSettings()">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M16.25 10C16.25 10.625 16.75 11.125 17.375 11.125C17.625 11.125 17.875 11.25 18 11.5L18.5 12.5C18.625 12.75 18.625 13 18.5 13.25L18 14.25C17.875 14.5 17.625 14.625 17.375 14.625C16.75 14.625 16.25 15.125 16.25 15.75C16.25 16 16.125 16.25 15.875 16.375L14.875 16.875C14.625 17 14.375 17 14.125 16.875L13.125 16.375C12.875 16.25 12.625 16.25 12.375 16.375C11.75 16.75 11 16.5 10.625 15.875C10.5 15.625 10.25 15.5 10 15.5C9.75 15.5 9.5 15.625 9.375 15.875C9 16.5 8.25 16.75 7.625 16.375C7.375 16.25 7.125 16.25 6.875 16.375L5.875 16.875C5.625 17 5.375 17 5.125 16.875L4.125 16.375C3.875 16.25 3.75 16 3.75 15.75C3.75 15.125 3.25 14.625 2.625 14.625C2.375 14.625 2.125 14.5 2 14.25L1.5 13.25C1.375 13 1.375 12.75 1.5 12.5L2 11.5C2.125 11.25 2.375 11.125 2.625 11.125C3.25 11.125 3.75 10.625 3.75 10C3.75 9.75 3.875 9.5 4.125 9.375L5.125 8.875C5.375 8.75 5.625 8.75 5.875 8.875L6.875 9.375C7.125 9.5 7.375 9.5 7.625 9.375C8.25 9 9 9.25 9.375 9.875C9.5 10.125 9.75 10.25 10 10.25C10.25 10.25 10.5 10.125 10.625 9.875C11 9.25 11.75 9 12.375 9.375C12.625 9.5 12.875 9.5 13.125 9.375L14.125 8.875C14.375 8.75 14.625 8.75 14.875 8.875L15.875 9.375C16.125 9.5 16.25 9.75 16.25 10Z" stroke="currentColor" stroke-width="1.5"/>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 1v6m0 6v6m-6-6h6m6 0h-6"/>
       </svg>
     </button>
   </div>
 
   <!-- Настройки -->
   <div class="settings-panel" id="settingsPanel">
-    <h3>⚙️ Привилегия</h3>
     <div class="privilege-selector">
       <button class="privilege-btn active" data-privilege="player" onclick="setPrivilege('player')">
         <span class="privilege-icon">👤</span>
-        <span>Игрок</span>
-        <span class="privilege-time">2:30</span>
+        <div class="privilege-info">
+          <span class="privilege-name">Игрок</span>
+          <span class="privilege-cd">КД: 2:30</span>
+        </div>
       </button>
       <button class="privilege-btn" data-privilege="prince" onclick="setPrivilege('prince')">
         <span class="privilege-icon">👑</span>
-        <span>Князь</span>
-        <span class="privilege-time">1:00</span>
+        <div class="privilege-info">
+          <span class="privilege-name">Князь</span>
+          <span class="privilege-cd">КД: 1:00</span>
+        </div>
       </button>
     </div>
   </div>
 
   <!-- Анки -->
   <div class="section">
-    <h2>Анки 100</h2>
+    <div class="section-header">
+      <h2>Анки 100</h2>
+      <span class="section-count">9</span>
+    </div>
     <div class="anki-grid">
-      <button class="anki-btn" onclick="selectAnki(101)">101</button>
-      <button class="anki-btn" onclick="selectAnki(102)">102</button>
-      <button class="anki-btn" onclick="selectAnki(103)">103</button>
-      <button class="anki-btn" onclick="selectAnki(104)">104</button>
-      <button class="anki-btn" onclick="selectAnki(105)">105</button>
-      <button class="anki-btn" onclick="selectAnki(106)">106</button>
-      <button class="anki-btn" onclick="selectAnki(107)">107</button>
-      <button class="anki-btn" onclick="selectAnki(108)">108</button>
-      <button class="anki-btn" onclick="selectAnki(109)">109</button>
+      <button class="anki-btn" onclick="executeAnki(101)">101</button>
+      <button class="anki-btn" onclick="executeAnki(102)">102</button>
+      <button class="anki-btn" onclick="executeAnki(103)">103</button>
+      <button class="anki-btn" onclick="executeAnki(104)">104</button>
+      <button class="anki-btn" onclick="executeAnki(105)">105</button>
+      <button class="anki-btn" onclick="executeAnki(106)">106</button>
+      <button class="anki-btn" onclick="executeAnki(107)">107</button>
+      <button class="anki-btn" onclick="executeAnki(108)">108</button>
+      <button class="anki-btn" onclick="executeAnki(109)">109</button>
     </div>
   </div>
 
   <div class="section">
-    <h2>Анки 200</h2>
+    <div class="section-header">
+      <h2>Анки 200</h2>
+      <span class="section-count">22</span>
+    </div>
     <div class="anki-grid">
-      <button class="anki-btn" onclick="selectAnki(201)">201</button>
-      <button class="anki-btn" onclick="selectAnki(202)">202</button>
-      <button class="anki-btn" onclick="selectAnki(203)">203</button>
-      <button class="anki-btn" onclick="selectAnki(204)">204</button>
-      <button class="anki-btn" onclick="selectAnki(205)">205</button>
-      <button class="anki-btn" onclick="selectAnki(206)">206</button>
-      <button class="anki-btn" onclick="selectAnki(207)">207</button>
-      <button class="anki-btn" onclick="selectAnki(208)">208</button>
-      <button class="anki-btn" onclick="selectAnki(209)">209</button>
-      <button class="anki-btn" onclick="selectAnki(210)">210</button>
-      <button class="anki-btn" onclick="selectAnki(211)">211</button>
-      <button class="anki-btn" onclick="selectAnki(212)">212</button>
-      <button class="anki-btn" onclick="selectAnki(213)">213</button>
-      <button class="anki-btn" onclick="selectAnki(214)">214</button>
-      <button class="anki-btn" onclick="selectAnki(215)">215</button>
-      <button class="anki-btn" onclick="selectAnki(216)">216</button>
-      <button class="anki-btn" onclick="selectAnki(217)">217</button>
-      <button class="anki-btn" onclick="selectAnki(218)">218</button>
-      <button class="anki-btn" onclick="selectAnki(219)">219</button>
-      <button class="anki-btn" onclick="selectAnki(220)">220</button>
-      <button class="anki-btn" onclick="selectAnki(221)">221</button>
-      <button class="anki-btn" onclick="selectAnki(222)">222</button>
+      <button class="anki-btn" onclick="executeAnki(201)">201</button>
+      <button class="anki-btn" onclick="executeAnki(202)">202</button>
+      <button class="anki-btn" onclick="executeAnki(203)">203</button>
+      <button class="anki-btn" onclick="executeAnki(204)">204</button>
+      <button class="anki-btn" onclick="executeAnki(205)">205</button>
+      <button class="anki-btn" onclick="executeAnki(206)">206</button>
+      <button class="anki-btn" onclick="executeAnki(207)">207</button>
+      <button class="anki-btn" onclick="executeAnki(208)">208</button>
+      <button class="anki-btn" onclick="executeAnki(209)">209</button>
+      <button class="anki-btn" onclick="executeAnki(210)">210</button>
+      <button class="anki-btn" onclick="executeAnki(211)">211</button>
+      <button class="anki-btn" onclick="executeAnki(212)">212</button>
+      <button class="anki-btn" onclick="executeAnki(213)">213</button>
+      <button class="anki-btn" onclick="executeAnki(214)">214</button>
+      <button class="anki-btn" onclick="executeAnki(215)">215</button>
+      <button class="anki-btn" onclick="executeAnki(216)">216</button>
+      <button class="anki-btn" onclick="executeAnki(217)">217</button>
+      <button class="anki-btn" onclick="executeAnki(218)">218</button>
+      <button class="anki-btn" onclick="executeAnki(219)">219</button>
+      <button class="anki-btn" onclick="executeAnki(220)">220</button>
+      <button class="anki-btn" onclick="executeAnki(221)">221</button>
+      <button class="anki-btn" onclick="executeAnki(222)">222</button>
     </div>
   </div>
 
   <div class="section">
-    <h2>Анки 300</h2>
-    <div class="anki-grid">
-      <button class="anki-btn" onclick="selectAnki(301)">301</button>
-      <button class="anki-btn" onclick="selectAnki(302)">302</button>
-      <button class="anki-btn" onclick="selectAnki(303)">303</button>
-      <button class="anki-btn" onclick="selectAnki(304)">304</button>
-      <button class="anki-btn" onclick="selectAnki(305)">305</button>
-      <button class="anki-btn" onclick="selectAnki(306)">306</button>
-      <button class="anki-btn" onclick="selectAnki(307)">307</button>
-      <button class="anki-btn" onclick="selectAnki(308)">308</button>
-      <button class="anki-btn" onclick="selectAnki(309)">309</button>
-      <button class="anki-btn" onclick="selectAnki(310)">310</button>
-      <button class="anki-btn" onclick="selectAnki(311)">311</button>
-      <button class="anki-btn" onclick="selectAnki(312)">312</button>
-      <button class="anki-btn" onclick="selectAnki(313)">313</button>
+    <div class="section-header">
+      <h2>Анки 300</h2>
+      <span class="section-count">13</span>
     </div>
-  </div>
-
-  <!-- Кнопка запуска -->
-  <div class="action-section">
-    <button class="start-btn" id="startBtn" onclick="startSequence()">
-      <span class="btn-icon">🚀</span>
-      <span id="btnText">Начать</span>
-    </button>
-    <div class="cooldown-info" id="cooldownInfo"></div>
+    <div class="anki-grid">
+      <button class="anki-btn" onclick="executeAnki(301)">301</button>
+      <button class="anki-btn" onclick="executeAnki(302)">302</button>
+      <button class="anki-btn" onclick="executeAnki(303)">303</button>
+      <button class="anki-btn" onclick="executeAnki(304)">304</button>
+      <button class="anki-btn" onclick="executeAnki(305)">305</button>
+      <button class="anki-btn" onclick="executeAnki(306)">306</button>
+      <button class="anki-btn" onclick="executeAnki(307)">307</button>
+      <button class="anki-btn" onclick="executeAnki(308)">308</button>
+      <button class="anki-btn" onclick="executeAnki(309)">309</button>
+      <button class="anki-btn" onclick="executeAnki(310)">310</button>
+      <button class="anki-btn" onclick="executeAnki(311)">311</button>
+      <button class="anki-btn" onclick="executeAnki(312)">312</button>
+      <button class="anki-btn" onclick="executeAnki(313)">313</button>
+    </div>
   </div>
 
   <!-- Лог -->
   <div class="log-section">
-    <h3>📋 Лог действий</h3>
+    <div class="log-header">
+      <span>📋 Лог</span>
+      <button class="log-clear" onclick="clearLog()">Очистить</button>
+    </div>
     <div class="log-content" id="logContent"></div>
   </div>
 </div>
 
-<script src="app.js"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>
