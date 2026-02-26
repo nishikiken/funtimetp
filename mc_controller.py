@@ -72,127 +72,79 @@ def show_code_window():
     """Показать окно с кодом доступа"""
     global code_window, access_code
     
+    # Получаем локальный IP
+    import socket
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    
     code_window = tk.Tk()
     code_window.title("MC Controller")
-    code_window.geometry("600x400")
-    code_window.configure(bg='#0f1419')
+    code_window.geometry("400x280")
+    code_window.configure(bg='#1a1f2e')
     code_window.resizable(False, False)
     code_window.overrideredirect(True)
     
     # Центрируем окно
     screen_width = code_window.winfo_screenwidth()
     screen_height = code_window.winfo_screenheight()
-    x = (screen_width - 600) // 2
-    y = (screen_height - 400) // 2
-    code_window.geometry(f"600x400+{x}+{y}")
+    x = (screen_width - 400) // 2
+    y = (screen_height - 280) // 2
+    code_window.geometry(f"400x280+{x}+{y}")
     
     code_window.attributes('-topmost', True)
+    code_window.attributes('-alpha', 0.95)  # Полупрозрачность
     
-    # Главный контейнер с градиентом (эмуляция)
-    main_canvas = tk.Canvas(code_window, width=600, height=400, bg='#0f1419', highlightthickness=0)
-    main_canvas.pack(fill='both', expand=True)
+    # Создаем скругленные углы через Canvas
+    canvas = tk.Canvas(code_window, width=400, height=280, bg='#0f1419', highlightthickness=0)
+    canvas.pack(fill='both', expand=True)
     
-    # Рисуем градиентный фон
-    for i in range(400):
-        ratio = i / 400
-        r1, g1, b1 = 15, 20, 25  # #0f1419
-        r2, g2, b2 = 26, 31, 46  # #1a1f2e
-        r = int(r1 + (r2 - r1) * ratio)
-        g = int(g1 + (g2 - g1) * ratio)
-        b = int(b1 + (b2 - b1) * ratio)
-        color = f'#{r:02x}{g:02x}{b:02x}'
-        main_canvas.create_line(0, i, 600, i, fill=color)
+    # Рисуем скругленный прямоугольник
+    def round_rectangle(x1, y1, x2, y2, radius=20, **kwargs):
+        points = [x1+radius, y1,
+                  x1+radius, y1,
+                  x2-radius, y1,
+                  x2-radius, y1,
+                  x2, y1,
+                  x2, y1+radius,
+                  x2, y1+radius,
+                  x2, y2-radius,
+                  x2, y2-radius,
+                  x2, y2,
+                  x2-radius, y2,
+                  x2-radius, y2,
+                  x1+radius, y2,
+                  x1+radius, y2,
+                  x1, y2,
+                  x1, y2-radius,
+                  x1, y2-radius,
+                  x1, y1+radius,
+                  x1, y1+radius,
+                  x1, y1]
+        return canvas.create_polygon(points, **kwargs, smooth=True)
     
-    # Рамка
-    main_canvas.create_rectangle(2, 2, 598, 398, outline='#60a5fa', width=2)
+    # Фон
+    round_rectangle(10, 10, 390, 270, radius=20, fill='#1a1f2e', outline='#60a5fa', width=2)
     
-    # Иконка молнии
-    icon_label = tk.Label(
-        code_window,
-        text="⚡",
-        font=("Arial", 70),
-        bg='#0f1419',
-        fg='#60a5fa'
-    )
-    icon_label.place(x=300, y=50, anchor='center')
+    # Текст сверху
+    canvas.create_text(200, 40, text="Введите этот код на сайте", 
+                      font=("Arial", 13), fill='#9ca3af')
     
-    # Заголовок
-    title_label = tk.Label(
-        code_window,
-        text="MC Controller",
-        font=("Arial", 26, "bold"),
-        bg='#0f1419',
-        fg='#ffffff'
-    )
-    title_label.place(x=300, y=130, anchor='center')
+    # Код (большой)
+    canvas.create_text(200, 110, text=access_code, 
+                      font=("Courier New", 42, "bold"), fill='#60a5fa')
     
-    # Подзаголовок
-    subtitle_label = tk.Label(
-        code_window,
-        text="Код доступа для подключения",
-        font=("Arial", 12),
-        bg='#0f1419',
-        fg='#9ca3af'
-    )
-    subtitle_label.place(x=300, y=170, anchor='center')
+    # Разделитель
+    canvas.create_line(50, 160, 350, 160, fill='#2d3142', width=1)
     
-    # Контейнер для кода
-    code_frame = tk.Frame(code_window, bg='#1a1f2e', bd=0)
-    code_frame.place(x=300, y=230, anchor='center', width=400, height=80)
-    
-    # Рисуем рамку вокруг кода
-    code_canvas = tk.Canvas(code_frame, width=400, height=80, bg='#1a1f2e', highlightthickness=0)
-    code_canvas.pack()
-    code_canvas.create_rectangle(2, 2, 398, 78, outline='#60a5fa', width=1)
-    
-    # Код
-    code_label = tk.Label(
-        code_frame,
-        text=access_code,
-        font=("Courier New", 36, "bold"),
-        bg='#1a1f2e',
-        fg='#60a5fa'
-    )
-    code_label.place(x=200, y=40, anchor='center')
+    # IP адрес для телефона
+    canvas.create_text(200, 190, text="Адрес для телефона:", 
+                      font=("Arial", 10), fill='#6b7280')
+    canvas.create_text(200, 215, text=f"http://{local_ip}:5000", 
+                      font=("Courier New", 11, "bold"), fill='#10b981')
     
     # Статус
-    status_label = tk.Label(
-        code_window,
-        text="Ожидание подключения",
-        font=("Arial", 11),
-        bg='#0f1419',
-        fg='#6b7280'
-    )
-    status_label.place(x=300, y=300, anchor='center')
-    
-    # Индикатор (точки)
-    dots_label = tk.Label(
-        code_window,
-        text="",
-        font=("Arial", 16),
-        bg='#0f1419',
-        fg='#60a5fa'
-    )
-    dots_label.place(x=300, y=330, anchor='center')
-    
-    # Подсказка
-    hint_label = tk.Label(
-        code_window,
-        text="Открой сайт и введи этот код",
-        font=("Arial", 10),
-        bg='#0f1419',
-        fg='#4b5563'
-    )
-    hint_label.place(x=300, y=365, anchor='center')
-    
-    # Анимация точек
-    def animate_dots(count=0):
-        if code_window.winfo_exists():
-            dots = "." * ((count % 3) + 1)
-            dots_label.config(text=dots)
-            code_window.after(500, lambda: animate_dots(count + 1))
-    
-    animate_dots()
+    canvas.create_text(200, 250, text="Ожидание подключения...", 
+                      font=("Arial", 9), fill='#4b5563')
     
     code_window.mainloop()
 

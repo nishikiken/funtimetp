@@ -107,8 +107,10 @@ function showCodeModal() {
 
 // Проверка подключения
 async function checkConnection() {
+  const server = localStorage.getItem('serverIP') || 'http://localhost:5000';
+  
   try {
-    const response = await fetch('http://localhost:5000/connect', {
+    const response = await fetch(`${server}/connect`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code: accessCode })
@@ -145,34 +147,120 @@ async function submitCode() {
     return;
   }
   
-  try {
-    // Проверяем код на сервере
-    const response = await fetch('http://localhost:5000/connect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code })
-    });
-    
-    if (response.ok) {
-      // Сохраняем код
-      accessCode = code;
-      localStorage.setItem('accessCode', code);
-      isConnected = true;
-      
-      // Закрываем модальное окно
-      document.getElementById('codeModal').style.display = 'none';
-      addLog('✅ Подключено к MC Controller', 'success');
-    } else {
-      errorMsg.textContent = 'Неверный код доступа';
-      // Очищаем поля
-      ['letter1', 'letter2', 'letter3', 'digit1', 'digit2', 'digit3'].forEach(id => {
-        document.getElementById(id).value = '';
+  // Пробуем разные адреса
+  const servers = [
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    // Если пользователь вводит IP вручную, он будет сохранен
+    localStorage.getItem('serverIP')
+  ].filter(Boolean);
+  
+  let connected = false;
+  
+  for (const server of servers) {
+    try {
+      const response = await fetch(`${server}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
       });
-      document.getElementById('letter1').focus();
+      
+      if (response.ok) {
+        // Сохраняем код и сервер
+        accessCode = code;
+        localStorage.setItem('accessCode', code);
+        localStorage.setItem('serverIP', server);
+        isConnected = true;
+        connected = true;
+        
+        // Закрываем модальное окно
+        document.getElementById('codeModal').style.display = 'none';
+        addLog('✅ Подключено к MC Controller', 'success');
+        break;
+      }
+    } catch (error) {
+      // Пробуем следующий сервер
+      continue;
     }
-  } catch (error) {
-    errorMsg.textContent = 'Сервер недоступен. Запусти mc_controller.py';
   }
+  
+  if (!connected) {
+    errorMsg.textContent = 'Не удалось подключиться. Введи IP адрес из окна MC Controller';
+    // Показываем поле для ввода IP
+    showIPInput();
+  }
+}
+
+// Показать поле для ввода IP
+function showIPInput() {
+  const errorMsg = document.getElementById('errorMessage');
+  const existingInput = document.getElementById('ipInput');
+  
+  if (existingInput) return;
+  
+  const ipContainer = document.createElement('div');
+  ipContainer.style.marginTop = '15px';
+  
+  const ipInput = document.createElement('input');
+  ipInput.id = 'ipInput';
+  ipInput.type = 'text';
+  ipInput.placeholder = 'Например: 192.168.1.3:5000';
+  ipInput.style.cssText = `
+    width: 100%;
+    padding: 10px;
+    background: rgba(15, 20, 25, 0.6);
+    border: 2px solid rgba(96, 165, 250, 0.3);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 10px;
+  `;
+  
+  const ipBtn = document.createElement('button');
+  ipBtn.textContent = 'Подключиться к этому IP';
+  ipBtn.style.cssText = `
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  `;
+  
+  ipBtn.onclick = async () => {
+    const ip = ipInput.value.trim();
+    if (!ip) return;
+    
+    const server = ip.startsWith('http') ? ip : `http://${ip}`;
+    localStorage.setItem('serverIP', server);
+    
+    // Пробуем подключиться
+    try {
+      const response = await fetch(`${server}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: accessCode })
+      });
+      
+      if (response.ok) {
+        isConnected = true;
+        document.getElementById('codeModal').style.display = 'none';
+        addLog('✅ Подключено к MC Controller', 'success');
+      } else {
+        errorMsg.textContent = 'Неверный код или IP адрес';
+      }
+    } catch (error) {
+      errorMsg.textContent = 'Не удалось подключиться к этому IP';
+    }
+  };
+  
+  ipContainer.appendChild(ipInput);
+  ipContainer.appendChild(ipBtn);
+  errorMsg.parentElement.appendChild(ipContainer);
 }
 
 // Переключение настроек
@@ -265,8 +353,10 @@ async function startSequence() {
 
 // Отправка команды на сервер
 async function sendCommand(command) {
+  const server = localStorage.getItem('serverIP') || 'http://localhost:5000';
+  
   try {
-    const response = await fetch('http://localhost:5000/command', {
+    const response = await fetch(`${server}/command`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -292,7 +382,7 @@ async function sendCommand(command) {
     return data;
   } catch (error) {
     if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
-      throw new Error('Сервер недоступен. Запусти mc_controller.py');
+      throw new Error('Сервер недоступен. Проверь подключение');
     }
     throw error;
   }
