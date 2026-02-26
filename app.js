@@ -132,62 +132,71 @@ async function checkConnection() {
 
 // Отправить код
 async function submitCode() {
-  const letter1 = document.getElementById('letter1').value;
-  const letter2 = document.getElementById('letter2').value;
-  const letter3 = document.getElementById('letter3').value;
-  const digit1 = document.getElementById('digit1').value;
-  const digit2 = document.getElementById('digit2').value;
-  const digit3 = document.getElementById('digit3').value;
+  console.log('submitCode вызвана');
+  
+  const letter1 = document.getElementById('letter1')?.value || '';
+  const letter2 = document.getElementById('letter2')?.value || '';
+  const letter3 = document.getElementById('letter3')?.value || '';
+  const digit1 = document.getElementById('digit1')?.value || '';
+  const digit2 = document.getElementById('digit2')?.value || '';
+  const digit3 = document.getElementById('digit3')?.value || '';
   
   const code = `${letter1}${letter2}${letter3}-${digit1}${digit2}${digit3}`;
   const errorMsg = document.getElementById('errorMessage');
   
-  if (code.length < 7 || code.includes('-undefined')) {
+  console.log('Код:', code);
+  
+  if (code.length < 7 || !letter1 || !letter2 || !letter3 || !digit1 || !digit2 || !digit3) {
     errorMsg.textContent = 'Заполни все поля';
+    console.log('Не все поля заполнены');
     return;
   }
   
-  // Пробуем разные адреса
-  const servers = [
-    'http://localhost:5000',
-    'http://127.0.0.1:5000',
-    // Если пользователь вводит IP вручную, он будет сохранен
-    localStorage.getItem('serverIP')
-  ].filter(Boolean);
+  // Получаем сервер - если открыто через http://IP:5000, используем его
+  const currentHost = window.location.hostname;
+  const currentPort = window.location.port || '5000';
+  const server = `http://${currentHost}:${currentPort}`;
   
-  let connected = false;
+  console.log('Подключаюсь к:', server);
+  errorMsg.textContent = 'Подключаюсь...';
   
-  for (const server of servers) {
-    try {
-      const response = await fetch(`${server}/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code })
-      });
+  try {
+    const response = await fetch(`${server}/connect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code })
+    });
+    
+    console.log('Ответ получен:', response.status);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Успех:', data);
       
-      if (response.ok) {
-        // Сохраняем код и сервер
-        accessCode = code;
-        localStorage.setItem('accessCode', code);
-        localStorage.setItem('serverIP', server);
-        isConnected = true;
-        connected = true;
-        
-        // Закрываем модальное окно
-        document.getElementById('codeModal').style.display = 'none';
-        addLog('✅ Подключено к MC Controller', 'success');
-        break;
-      }
-    } catch (error) {
-      // Пробуем следующий сервер
-      continue;
+      // Сохраняем код и сервер
+      accessCode = code;
+      localStorage.setItem('accessCode', code);
+      localStorage.setItem('serverIP', server);
+      isConnected = true;
+      
+      // Закрываем модальное окно
+      document.getElementById('codeModal').style.display = 'none';
+      addLog('✅ Подключено к MC Controller', 'success');
+    } else {
+      const error = await response.json();
+      console.log('Ошибка:', error);
+      errorMsg.textContent = error.error || 'Неверный код доступа';
+      
+      // Очищаем поля
+      ['letter1', 'letter2', 'letter3', 'digit1', 'digit2', 'digit3'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      document.getElementById('letter1')?.focus();
     }
-  }
-  
-  if (!connected) {
-    errorMsg.textContent = 'Не удалось подключиться. Введи IP адрес из окна MC Controller';
-    // Показываем поле для ввода IP
-    showIPInput();
+  } catch (error) {
+    console.error('Ошибка подключения:', error);
+    errorMsg.textContent = 'Не удалось подключиться: ' + error.message;
   }
 }
 
